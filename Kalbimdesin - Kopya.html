@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kalbimdesin</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #f8bbd0, #ce93d8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .heart {
+      width: 100px;
+      height: 90px;
+      position: relative;
+      transform: scale(1);
+      animation: pulse 2s infinite;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 100px;
+      height: 90px;
+      background: #ec407a;
+      border-radius: 50px 50px 0 0;
+    }
+
+    .heart::before {
+      left: 50px;
+      transform: rotate(-45deg);
+      transform-origin: 0 100%;
+    }
+
+    .heart::after {
+      left: 0;
+      transform: rotate(45deg);
+      transform-origin: 100% 100%;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+    }
+
+    .status {
+      position: absolute;
+      bottom: 60px;
+      font-size: 1.4em;
+      color: #6a1b9a;
+      background: rgba(255,255,255,0.6);
+      padding: 10px 20px;
+      border-radius: 20px;
+      backdrop-filter: blur(5px);
+    }
+  </style>
+</head>
+<body>
+  <div class="heart" id="heart"></div>
+  <div class="status" id="status">Yükleniyor...</div>
+
+  <audio id="bgMusic" src="music.mp3" autoplay loop></audio>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAlYF11-JLysORTrV7ISD4NLf4dIoA0VFU",
+      authDomain: "kalbimdesin-15b30.firebaseapp.com",
+      databaseURL: "https://kalbimdesin-15b30-default-rtdb.firebaseio.com",
+      projectId: "kalbimdesin-15b30",
+      storageBucket: "kalbimdesin-15b30.firebasestorage.app",
+      messagingSenderId: "100051190918",
+      appId: "1:100051190918:web:2cfefbdd7bbe15492b3d07",
+      measurementId: "G-XG1C3TDYFC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const params = new URLSearchParams(window.location.search);
+    const me = params.get("ben") || "anonim";
+    const other = me === "sen" ? "o" : "sen";
+
+    const myRef = ref(db, `users/${me}`);
+    const otherRef = ref(db, `users/${other}`);
+
+    // Kalp animasyonu
+    const heart = document.getElementById("heart");
+    const statusText = document.getElementById("status");
+
+    // Bağlantıyı bildir
+    set(myRef, { online: true, timestamp: Date.now() });
+
+    // Diğer kişinin durumu izleniyor
+    onValue(otherRef, (snapshot) => {
+      const val = snapshot.val();
+      if (val && val.online) {
+        heart.style.animation = "pulse 0.8s infinite";
+        statusText.textContent = "İkiniz de buradasınız 💞";
+      } else {
+        heart.style.animation = "pulse 2s infinite";
+        statusText.textContent = "Sadece sen buradasın 💗";
+      }
+    });
+
+    // Sayfa kapanınca bağlantı kapansın
+    window.addEventListener("beforeunload", () => {
+      set(myRef, { online: false });
+    });
+  </script>
+</body>
+</html>
